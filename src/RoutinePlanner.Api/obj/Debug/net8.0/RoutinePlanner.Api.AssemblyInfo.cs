@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RoutinePlanner.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e86e7c701ea543ac719ffcabb176e48d57333482")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+833525665cd8e497dd5474ff55ee954a6e4e9c04")]
 [assembly: System.Reflection.AssemblyProductAttribute("RoutinePlanner.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RoutinePlanner.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
