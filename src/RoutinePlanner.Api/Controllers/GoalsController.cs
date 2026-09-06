@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using RoutinePlanner.Api.Common.Exceptions;
 using RoutinePlanner.Api.Data;
 using RoutinePlanner.Api.DTOs;
 using RoutinePlanner.Api.Models;
@@ -35,9 +36,10 @@ public class GoalsController : ControllerBase
     {
         var goal = await _db.Goals
             .Include(g => g.Items)
-            .FirstOrDefaultAsync(g => g.Id == id);
+            .FirstOrDefaultAsync(g => g.Id == id)
+            ?? throw NotFoundException.For<Goal>(id);
 
-        return goal is null ? NotFound() : Ok(ToDto(goal));
+        return Ok(ToDto(goal));
     }
 
     [HttpPost]
@@ -62,8 +64,8 @@ public class GoalsController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, CreateGoalRequest req)
     {
-        var goal = await _db.Goals.FindAsync(id);
-        if (goal is null) return NotFound();
+        var goal = await _db.Goals.FindAsync(id)
+            ?? throw NotFoundException.For<Goal>(id);
 
         goal.Title = req.Title;
         goal.Description = req.Description;
@@ -79,8 +81,8 @@ public class GoalsController : ControllerBase
     [HttpPatch("{id}/toggle")]
     public async Task<IActionResult> ToggleCompleted(int id)
     {
-        var goal = await _db.Goals.FindAsync(id);
-        if (goal is null) return NotFound();
+        var goal = await _db.Goals.FindAsync(id)
+            ?? throw NotFoundException.For<Goal>(id);
 
         goal.IsCompleted = !goal.IsCompleted;
         await _db.SaveChangesAsync();
@@ -90,8 +92,8 @@ public class GoalsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var goal = await _db.Goals.FindAsync(id);
-        if (goal is null) return NotFound();
+        var goal = await _db.Goals.FindAsync(id)
+            ?? throw NotFoundException.For<Goal>(id);
 
         _db.Goals.Remove(goal);
         await _db.SaveChangesAsync();
