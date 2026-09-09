@@ -262,7 +262,7 @@ namespace RoutinePlanner.Api.Migrations
 
                     b.HasIndex("ApplicationUserId");
 
-                    b.ToTable("Goals");
+                    b.ToTable("Goals", (string)null);
                 });
 
             modelBuilder.Entity("RoutinePlanner.Api.Models.GoalItem", b =>
@@ -293,7 +293,7 @@ namespace RoutinePlanner.Api.Migrations
 
                     b.HasIndex("GoalId");
 
-                    b.ToTable("GoalItems");
+                    b.ToTable("GoalItems", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

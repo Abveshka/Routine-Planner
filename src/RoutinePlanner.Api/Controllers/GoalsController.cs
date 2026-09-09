@@ -4,14 +4,21 @@ using RoutinePlanner.Api.Common.Exceptions;
 using RoutinePlanner.Api.Data;
 using RoutinePlanner.Api.DTOs;
 using RoutinePlanner.Api.Models;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace RoutinePlanner.Api.Controllers;
 
 [ApiController]
+[Authorize]   
 [Route("api/goals")]
 public class GoalsController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
+    
+    private string CurrentUserId =>
+        User.FindFirstValue(ClaimTypes.NameIdentifier)
+        ?? throw new UnauthorizedAccessException();
 
     public GoalsController(ApplicationDbContext db)
     {
@@ -22,6 +29,7 @@ public class GoalsController : ControllerBase
     public async Task<ActionResult<List<GoalDto>>> GetAll()
     {
         var goals = await _db.Goals
+            .Where(g => g.UserId == CurrentUserId)
             .Include(g => g.Items)
             .OrderBy(g => g.Year)
             .ThenBy(g => g.Season)
@@ -35,9 +43,12 @@ public class GoalsController : ControllerBase
     public async Task<ActionResult<GoalDto>> GetById(int id)
     {
         var goal = await _db.Goals
-            .Include(g => g.Items)
-            .FirstOrDefaultAsync(g => g.Id == id)
-            ?? throw NotFoundException.For<Goal>(id);
+                       .Include(g => g.Items)
+                       .FirstOrDefaultAsync(g => g.Id == id)
+                   ?? throw NotFoundException.For<Goal>(id);
+
+        if (goal.UserId != CurrentUserId)
+            throw new ForbiddenException();
 
         return Ok(ToDto(goal));
     }
@@ -48,6 +59,7 @@ public class GoalsController : ControllerBase
         var goal = new Goal
         {
             Title = req.Title,
+            UserId = CurrentUserId,
             Description = req.Description,
             Year = req.Year,
             Season = req.Season,
@@ -66,7 +78,10 @@ public class GoalsController : ControllerBase
     {
         var goal = await _db.Goals.FindAsync(id)
             ?? throw NotFoundException.For<Goal>(id);
-
+        
+        if (goal.UserId != CurrentUserId)
+            throw new ForbiddenException();
+        
         goal.Title = req.Title;
         goal.Description = req.Description;
         goal.Year = req.Year;
@@ -84,6 +99,9 @@ public class GoalsController : ControllerBase
         var goal = await _db.Goals.FindAsync(id)
             ?? throw NotFoundException.For<Goal>(id);
 
+        if (goal.UserId != CurrentUserId)
+            throw new ForbiddenException();
+        
         goal.IsCompleted = !goal.IsCompleted;
         await _db.SaveChangesAsync();
         return NoContent();
@@ -95,6 +113,9 @@ public class GoalsController : ControllerBase
         var goal = await _db.Goals.FindAsync(id)
             ?? throw NotFoundException.For<Goal>(id);
 
+        if (goal.UserId != CurrentUserId)
+            throw new ForbiddenException();
+        
         _db.Goals.Remove(goal);
         await _db.SaveChangesAsync();
         return NoContent();
