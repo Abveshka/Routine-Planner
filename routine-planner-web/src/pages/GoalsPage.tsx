@@ -12,6 +12,10 @@ interface Goal {
     isCompleted: boolean;
 }
 
+interface GoalsPageProps {
+    onUnauthorized: () => void;
+}
+
 const SUB_PERIOD_LABELS = ["Начало", "Середина", "Конец"];
 
 const SEASON_CONFIG = [
@@ -38,7 +42,7 @@ function formatCost(cost: number) {
     return new Intl.NumberFormat("ru-RU").format(cost) + " ₽";
 }
 
-function GoalsPage() {
+function GoalsPage({ onUnauthorized }: GoalsPageProps) {
     const [goals, setGoals] = useState<Goal[]>([]);
 
     useEffect(() => {
@@ -46,13 +50,44 @@ function GoalsPage() {
         fetch("http://localhost:5112/api/goals", {
             headers: { Authorization: `Bearer ${token}` },
         }).then((response) => {
+            if (response.status === 401) {
+                onUnauthorized();
+                return;
+            }
             if (!response.ok) {
                 console.error("Ошибка загрузки целей, статус:", response.status);
                 return;
             }
             response.json().then((data) => setGoals(data));
         });
-    }, []);
+    }, [onUnauthorized]);
+
+    async function handleToggle(goalId: number) {
+        setGoals((prevGoals) =>
+            prevGoals.map((goal) =>
+                goal.id === goalId ? { ...goal, isCompleted: !goal.isCompleted } : goal
+            )
+        );
+
+        const token = localStorage.getItem("token");
+        const response = await fetch(`http://localhost:5112/api/goals/${goalId}/toggle`, {
+            method: "PATCH",
+            headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (response.status === 401) {
+            onUnauthorized();
+            return;
+        }
+        if (!response.ok) {
+            console.error("Не удалось изменить статус цели");
+            setGoals((prevGoals) =>
+                prevGoals.map((goal) =>
+                    goal.id === goalId ? { ...goal, isCompleted: !goal.isCompleted } : goal
+                )
+            );
+        }
+    }
 
     const grouped = groupGoals(goals);
 
@@ -80,7 +115,11 @@ function GoalsPage() {
                                         <p className="subperiod-label">{SUB_PERIOD_LABELS[Number(subIndex)]}</p>
                                         {items.map((goal) => (
                                             <div className="goal-row" key={goal.id}>
-                                                <input type="checkbox" checked={goal.isCompleted} readOnly />
+                                                <input
+                                                    type="checkbox"
+                                                    checked={goal.isCompleted}
+                                                    onChange={() => handleToggle(goal.id)}
+                                                />
                                                 <span className={goal.isCompleted ? "goal-done" : "goal-title"}>
                           {goal.title}
                         </span>
