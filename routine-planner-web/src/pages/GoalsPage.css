@@ -1,0 +1,95 @@
+﻿.goals-page {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 2.5rem 4rem;
+}
+
+.goals-page h1 {
+    font-family: "Manrope", sans-serif;
+    font-weight: 700;
+    font-size: 24px;
+    margin: 0 0 4px;
+}
+
+.year-header {
+    font-family: "Manrope", sans-serif;
+    font-weight: 700;
+    font-size: 22px;
+    margin: 32px 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e5e3dc;
+}
+
+.season-block {
+    margin-bottom: 24px;
+}
+
+.season-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.season-badge {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.season-name {
+    font-weight: 500;
+    font-size: 15px;
+}
+
+.subperiod-label {
+    font-size: 12px;
+    color: #8a8a83;
+    margin: 10px 0 4px 38px;
+}
+
+.goal-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0 8px 38px;
+    border-bottom: 1px solid #efeee8;
+}
+
+.goal-title {
+    flex: 1;
+    font-size: 14px;
+}
+
+.goal-done {
+    flex: 1;
+    font-size: 14px;
+    color: #9a9a93;
+    text-decoration: line-through;
+}
+
+.goal-cost {
+    font-size: 13px;
+    color: #8a8a83;
+}
+
+.add-goal-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 24px;
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid #d8d6cd;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.add-goal-button:hover {
+    background: #f0efe9;
+}
