@@ -1,10 +1,13 @@
 ﻿import { useState, useEffect } from "react";
 import { Snowflake, Flower2, Sun, Leaf, Plus } from "lucide-react";
 import "./GoalsPage.css";
+import Sidebar from "../components/Sidebar";
+import GoalDetailsModal from "../components/GoalDetailsModal";
 
 interface Goal {
     id: number;
     title: string;
+    description: string | null;
     year: number;
     season: number;
     subPeriod: number;
@@ -44,6 +47,7 @@ function formatCost(cost: number) {
 
 function GoalsPage({ onUnauthorized }: GoalsPageProps) {
     const [goals, setGoals] = useState<Goal[]>([]);
+    const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -92,54 +96,69 @@ function GoalsPage({ onUnauthorized }: GoalsPageProps) {
     const grouped = groupGoals(goals);
 
     return (
-        <div className="goals-page">
-            <h1>Мои цели</h1>
+        <div className="page-layout">
+            <Sidebar onAddGoal={() => console.log("TODO: открыть форму добавления цели")}/>
+            <div className="goals-page">
+                <h1>Мои цели</h1>
 
-            {Object.entries(grouped).map(([year, seasons]) => (
-                <section key={year}>
-                    <h2 className="year-header">{year}</h2>
+                {Object.entries(grouped).map(([year, seasons]) => (
+                    <section key={year}>
+                        <h2 className="year-header">{year}</h2>
 
-                    {Object.entries(seasons).map(([seasonIndex, subPeriods]) => {
-                        const config = SEASON_CONFIG[Number(seasonIndex)];
-                        return (
-                            <div className="season-block" key={seasonIndex}>
-                                <div className="season-header">
-                  <span className="season-badge" style={{ background: config.bg }}>
-                    <config.Icon size={16} color={config.accent} />
+                        {Object.entries(seasons).map(([seasonIndex, subPeriods]) => {
+                            const config = SEASON_CONFIG[Number(seasonIndex)];
+                            return (
+                                <div className="season-block" key={seasonIndex}>
+                                    <div className="season-header">
+                  <span className="season-badge" style={{background: config.bg}}>
+                    <config.Icon size={16} color={config.accent}/>
                   </span>
-                                    <span className="season-name">{config.label}</span>
-                                </div>
+                                        <span className="season-name">{config.label}</span>
+                                    </div>
 
-                                {Object.entries(subPeriods).map(([subIndex, items]) => (
-                                    <div key={subIndex}>
-                                        <p className="subperiod-label">{SUB_PERIOD_LABELS[Number(subIndex)]}</p>
-                                        {items.map((goal) => (
-                                            <div className="goal-row" key={goal.id}>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={goal.isCompleted}
-                                                    onChange={() => handleToggle(goal.id)}
-                                                />
-                                                <span className={goal.isCompleted ? "goal-done" : "goal-title"}>
+                                    {Object.entries(subPeriods).map(([subIndex, items]) => (
+                                        <div key={subIndex}>
+                                            <p className="subperiod-label">{SUB_PERIOD_LABELS[Number(subIndex)]}</p>
+                                            {items.map((goal) => (
+                                                <div className="goal-row" key={goal.id}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={goal.isCompleted}
+                                                        onChange={() => handleToggle(goal.id)}
+                                                    />
+                                                    <span
+                                                        className={goal.isCompleted ? "goal-done" : "goal-title"}
+                                                        onClick={() => setSelectedGoal(goal)}
+                                                        style={{ cursor: "pointer" }}
+                                                    >
                           {goal.title}
                         </span>
-                                                <span className="goal-cost">
+                                                    <span className="goal-cost">
                           {goal.totalCost ? formatCost(goal.totalCost) : "—"}
                         </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ))}
-                            </div>
-                        );
-                    })}
-                </section>
-            ))}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ))}
+                                </div>
+                            );
+                        })}
+                    </section>
+                ))}
 
-            <button className="add-goal-button">
-                <Plus size={16} />
-                Добавить цель
-            </button>
+                <button className="add-goal-button">
+                    <Plus size={16}/>
+                    Добавить цель
+                </button>
+            </div>
+            {selectedGoal && (
+                <GoalDetailsModal
+                    goal={selectedGoal}
+                    seasonLabel={SEASON_CONFIG[selectedGoal.season].label}
+                    subPeriodLabel={SUB_PERIOD_LABELS[selectedGoal.subPeriod]}
+                    onClose={() => setSelectedGoal(null)}
+                />
+            )}
         </div>
     );
 }
