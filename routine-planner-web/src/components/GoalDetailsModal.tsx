@@ -1,5 +1,6 @@
 ﻿import { useState } from "react";
 import { X } from "lucide-react";
+import { useNavigate, useParams, useOutletContext } from "react-router-dom";
 import "./GoalDetailsModal.css";
 
 interface Goal {
@@ -10,41 +11,90 @@ interface Goal {
     season: number;
     subPeriod: number;
     totalCost: number;
+    manualCost: number | null;
     isCompleted: boolean;
-}
-
-interface GoalDetailsModalProps {
-    goal: Goal;
-    seasonLabel: string;
-    subPeriodLabel: string;
-    onClose: () => void;
 }
 
 const SEASON_OPTIONS = ["Зима", "Весна", "Лето", "Осень"];
 const SUB_PERIOD_OPTIONS = ["Начало", "Середина", "Конец"];
 
-function GoalDetailsModal({ goal, seasonLabel, subPeriodLabel, onClose }: GoalDetailsModalProps) {
-    const [isEditing, setIsEditing] = useState(false);
+// Тип функции, которую мы получаем от GoalsPage
+type GoalChanges = {
+    title: string;
+    description: string | null;
+    season: number;
+    subPeriod: number;
+    manualCost: number | null
+};
+function GoalDetailsModal() {
+    const { id } = useParams();
+    const { goals, onGoalUpdate } = useOutletContext<{
+        goals: Goal[];
+        onGoalUpdate: (goalId: number, changes: GoalChanges) => Promise<boolean>;
+    }>();
 
+    const goal = goals.find((g) => g.id === Number(id));
+    if (!goal) return null;
+
+    return <GoalDetailsContent goal={goal} onGoalUpdate={onGoalUpdate} />;
+}
+
+// Внутренний компонент: сама модалка, здесь цель уже точно есть
+function GoalDetailsContent({ goal, onGoalUpdate, }: 
+    { goal: Goal; onGoalUpdate: (goalId: number, changes: GoalChanges) => Promise<boolean>; }) {
+    const navigate = useNavigate();
+    const [isEditing, setIsEditing] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const [title, setTitle] = useState(goal.title);
     const [description, setDescription] = useState(goal.description ?? "");
     const [season, setSeason] = useState(goal.season);
     const [subPeriod, setSubPeriod] = useState(goal.subPeriod);
-    const [cost, setCost] = useState(goal.totalCost);
+    const [cost, setCost] = useState(goal.manualCost?.toString() ?? "");
 
+    // вместо onClose
+    function handleClose() {
+        navigate("/goals");
+    }
+
+    async function handleSave() {
+        // Простая проверка: пустое название сохранять нельзя
+        if (!title.trim()) {
+            alert("Название не может быть пустым");
+            return;
+        }
+
+        setIsSaving(true); // блокируем кнопку, чтобы не нажали дважды
+
+        const success = await onGoalUpdate(goal.id, {
+            title: title.trim(),
+            // пустое описание отправляем как null, потому что в Goal оно string | null
+            description: description.trim() === "" ? null : description,
+            season,
+            subPeriod,
+            manualCost: cost.trim() === "" ? null : Number(cost),
+        });
+
+        setIsSaving(false);
+
+        if (success) {
+            setIsEditing(false); // возвращаемся в режим просмотра
+        } else {
+            alert("Не удалось сохранить цель");
+        }
+    }
     function handleCancel() {
         setTitle(goal.title);
         setDescription(goal.description ?? "");
         setSeason(goal.season);
         setSubPeriod(goal.subPeriod);
-        setCost(goal.totalCost);
+        setCost(goal.manualCost?.toString() ?? "");
         setIsEditing(false);
     }
 
     return (
-        <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-overlay" onClick={handleClose}>
             <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-                <button className="modal-close" onClick={onClose} aria-label="Закрыть">
+                <button className="modal-close" onClick={handleClose} aria-label="Закрыть">
                     <X size={18} />
                 </button>
 
@@ -93,7 +143,7 @@ function GoalDetailsModal({ goal, seasonLabel, subPeriodLabel, onClose }: GoalDe
                         </div>
                     ) : (
                         <p className="modal-field-value">
-                            {seasonLabel}, {subPeriodLabel}, {goal.year}
+                            {SEASON_OPTIONS[goal.season]}, {SUB_PERIOD_OPTIONS[goal.subPeriod]}, {goal.year}
                         </p>
                     )}
                 </div>
@@ -104,8 +154,10 @@ function GoalDetailsModal({ goal, seasonLabel, subPeriodLabel, onClose }: GoalDe
                         <input
                             className="modal-input"
                             type="number"
+                            min="0"
                             value={cost}
-                            onChange={(e) => setCost(Number(e.target.value))}
+                            onChange={(e) => setCost(e.target.value)}
+                            placeholder="Считается по подзадачам"
                         />
                     ) : (
                         <p className="modal-field-value">
@@ -117,11 +169,19 @@ function GoalDetailsModal({ goal, seasonLabel, subPeriodLabel, onClose }: GoalDe
                 <div className="modal-actions">
                     {isEditing ? (
                         <>
-                            <button className="modal-button modal-button-secondary" onClick={handleCancel}>
+                            <button
+                                className="modal-button modal-button-secondary"
+                                onClick={handleCancel}
+                                disabled={isSaving}
+                            >
                                 Отмена
                             </button>
-                            <button className="modal-button modal-button-primary" onClick={() => {}}>
-                                Сохранить
+                            <button
+                                className="modal-button modal-button-primary"
+                                onClick={handleSave}
+                                disabled={isSaving}
+                            >
+                                {isSaving ? "Сохранение..." : "Сохранить"}
                             </button>
                         </>
                     ) : (

@@ -1,8 +1,11 @@
 ﻿import { useState, useEffect } from "react";
-import { Snowflake, Flower2, Sun, Leaf, Plus } from "lucide-react";
+import { useNavigate, Outlet } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { Snowflake, Flower2, Sun, Leaf } from "lucide-react";
 import "./GoalsPage.css";
 import Sidebar from "../components/Sidebar";
-import GoalDetailsModal from "../components/GoalDetailsModal";
+
+// ===== Типы =====
 
 interface Goal {
     id: number;
@@ -11,13 +14,21 @@ interface Goal {
     year: number;
     season: number;
     subPeriod: number;
-    totalCost: number;
+    totalCost: number;          // итоговая стоимость (считает сервер)
+    manualCost: number | null;  // стоимость, введённая вручную (или null)
     isCompleted: boolean;
 }
 
-interface GoalsPageProps {
-    onUnauthorized: () => void;
+// Какие поля можно менять из модалки
+interface GoalChanges {
+    title: string;
+    description: string | null;
+    season: number;
+    subPeriod: number;
+    manualCost: number | null;
 }
+
+// ===== Константы и вспомогательные функции =====
 
 const SUB_PERIOD_LABELS = ["Начало", "Середина", "Конец"];
 
@@ -45,17 +56,20 @@ function formatCost(cost: number) {
     return new Intl.NumberFormat("ru-RU").format(cost) + " ₽";
 }
 
-function GoalsPage({ onUnauthorized }: GoalsPageProps) {
-    const [goals, setGoals] = useState<Goal[]>([]);
-    const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
+// ===== Компонент страницы =====
 
+function GoalsPage() {
+    const { token, logout } = useAuth();
+    const navigate = useNavigate();
+    const [goals, setGoals] = useState<Goal[]>([]);
+
+    // Загружаем список целей при открытии страницы
     useEffect(() => {
-        const token = localStorage.getItem("token");
         fetch("http://localhost:5112/api/goals", {
             headers: { Authorization: `Bearer ${token}` },
         }).then((response) => {
             if (response.status === 401) {
-                onUnauthorized();
+                logout();
                 return;
             }
             if (!response.ok) {
@@ -64,40 +78,103 @@ function GoalsPage({ onUnauthorized }: GoalsPageProps) {
             }
             response.json().then((data) => setGoals(data));
         });
-    }, [onUnauthorized]);
+    }, [token, logout]);
 
+    // ===== handleToggle: только переключение галочки =====
     async function handleToggle(goalId: number) {
+        // Сначала меняем на экране сразу, чтобы интерфейс не тормозил
         setGoals((prevGoals) =>
             prevGoals.map((goal) =>
                 goal.id === goalId ? { ...goal, isCompleted: !goal.isCompleted } : goal
             )
         );
 
-        const token = localStorage.getItem("token");
         const response = await fetch(`http://localhost:5112/api/goals/${goalId}/toggle`, {
             method: "PATCH",
             headers: { Authorization: `Bearer ${token}` },
         });
 
         if (response.status === 401) {
-            onUnauthorized();
+            logout();
             return;
         }
         if (!response.ok) {
             console.error("Не удалось изменить статус цели");
+            // Сервер не принял, возвращаем галочку обратно
             setGoals((prevGoals) =>
                 prevGoals.map((goal) =>
                     goal.id === goalId ? { ...goal, isCompleted: !goal.isCompleted } : goal
                 )
             );
         }
+    } // <-- handleToggle заканчивается здесь
+
+    // ===== handleUpdate: сохранение изменений цели =====
+    // Стоит на том же уровне, что и handleToggle (НЕ внутри неё).
+    // Возвращает true, если сохранилось, и false, если нет.
+    async function handleUpdate(goalId: number, changes: GoalChanges): Promise<boolean> {
+        // Находим текущую цель: нужен год. Его в модалке не меняем,
+        // но сервер ждёт его в запросе
+        const goal = goals.find((g) => g.id === goalId);
+        if (!goal) return false;
+
+        const response = await fetch(`http://localhost:5112/api/goals/${goalId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            // JSON.stringify превращает объект в текст, который можно отправить
+            body: JSON.stringify({
+                title: changes.title,
+                description: changes.description,
+                year: goal.year,
+                season: changes.season,
+                subPeriod: changes.subPeriod,
+                manualCost: changes.manualCost,
+            }),
+        });
+
+        if (response.status === 401) {
+            logout();
+            return false;
+        }
+        if (!response.ok) {
+            console.error("Не удалось сохранить цель, статус:", response.status);
+            return false;
+        }
+
+        // PUT вернул NoContent (пустой ответ), поэтому просим у сервера
+        // свежую версию этой цели. Так TotalCost будет посчитан сервером.
+        const freshResponse = await fetch(`http://localhost:5112/api/goals/${goalId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!freshResponse.ok) {
+            // Сохранилось, но свежие данные не получили.
+            // Обновляем список вручную, чтобы хоть что-то показать
+            setGoals((prev) =>
+                prev.map((g) =>
+                    g.id === goalId
+                        ? { ...g, ...changes, totalCost: changes.manualCost ?? g.totalCost }
+                        : g
+                )
+            );
+            return true;
+        }
+
+        const freshGoal: Goal = await freshResponse.json();
+
+        // Заменяем старую версию цели на свежую с сервера
+        setGoals((prev) => prev.map((g) => (g.id === goalId ? freshGoal : g)));
+        return true;
     }
 
     const grouped = groupGoals(goals);
 
     return (
         <div className="page-layout">
-            <Sidebar onAddGoal={() => console.log("TODO: открыть форму добавления цели")}/>
+            <Sidebar />
             <div className="goals-page">
                 <h1>Мои цели</h1>
 
@@ -110,9 +187,9 @@ function GoalsPage({ onUnauthorized }: GoalsPageProps) {
                             return (
                                 <div className="season-block" key={seasonIndex}>
                                     <div className="season-header">
-                  <span className="season-badge" style={{background: config.bg}}>
-                    <config.Icon size={16} color={config.accent}/>
-                  </span>
+                                        <span className="season-badge" style={{ background: config.bg }}>
+                                            <config.Icon size={16} color={config.accent} />
+                                        </span>
                                         <span className="season-name">{config.label}</span>
                                     </div>
 
@@ -128,14 +205,14 @@ function GoalsPage({ onUnauthorized }: GoalsPageProps) {
                                                     />
                                                     <span
                                                         className={goal.isCompleted ? "goal-done" : "goal-title"}
-                                                        onClick={() => setSelectedGoal(goal)}
+                                                        onClick={() => navigate(`/goals/${goal.id}`)}
                                                         style={{ cursor: "pointer" }}
                                                     >
-                          {goal.title}
-                        </span>
+                                                        {goal.title}
+                                                    </span>
                                                     <span className="goal-cost">
-                          {goal.totalCost ? formatCost(goal.totalCost) : "—"}
-                        </span>
+                                                        {goal.totalCost ? formatCost(goal.totalCost) : "—"}
+                                                    </span>
                                                 </div>
                                             ))}
                                         </div>
@@ -145,20 +222,10 @@ function GoalsPage({ onUnauthorized }: GoalsPageProps) {
                         })}
                     </section>
                 ))}
-
-                <button className="add-goal-button">
-                    <Plus size={16}/>
-                    Добавить цель
-                </button>
             </div>
-            {selectedGoal && (
-                <GoalDetailsModal
-                    goal={selectedGoal}
-                    seasonLabel={SEASON_CONFIG[selectedGoal.season].label}
-                    subPeriodLabel={SUB_PERIOD_LABELS[selectedGoal.subPeriod]}
-                    onClose={() => setSelectedGoal(null)}
-                />
-            )}
+
+            {/* Передаём в модалку и список целей, и функцию сохранения */}
+            <Outlet context={{ goals, onGoalUpdate: handleUpdate }} />
         </div>
     );
 }

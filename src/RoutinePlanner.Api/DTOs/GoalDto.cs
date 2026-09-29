@@ -9,6 +9,7 @@ public record GoalDto(
     Season Season,
     SubPeriod SubPeriod,
     decimal TotalCost,
+    decimal? ManualCost,
     bool IsCompleted,
     DateTime CreatedAt,
     List<GoalItemDto> Items);

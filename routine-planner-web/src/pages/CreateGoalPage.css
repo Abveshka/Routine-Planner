@@ -1,0 +1,124 @@
+﻿.creategoal-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    box-sizing: border-box;
+}
+
+.creategoal-card {
+    width: 100%;
+    max-width: 440px;
+    background: #ffffff;
+    border: 1px solid #e5e3dc;
+    border-radius: 10px;
+    padding: 40px 32px;
+    box-sizing: border-box;
+    box-shadow: 0 1px 3px rgba(31, 36, 33, 0.04);
+}
+
+.creategoal-title {
+    font-family: "Manrope", sans-serif;
+    font-weight: 700;
+    font-size: 26px;
+    margin: 0 0 6px;
+}
+
+.creategoal-subtitle {
+    color: #8a8a83;
+    font-size: 14px;
+    margin: 0 0 28px;
+}
+
+.creategoal-field {
+    display: block;
+    margin-bottom: 20px;
+}
+
+.creategoal-label {
+    display: block;
+    font-size: 13px;
+    color: #8a8a83;
+    margin-bottom: 6px;
+}
+
+.creategoal-input,
+.creategoal-textarea,
+.creategoal-select {
+    width: 100%;
+    box-sizing: border-box;
+    border: none;
+    border-bottom: 1px solid #d8d6cd;
+    border-radius: 0;
+    background: transparent;
+    padding: 8px 0;
+    font-size: 15px;
+    font-family: "Inter", sans-serif;
+    color: #1f2421;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.creategoal-textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+.creategoal-input:focus,
+.creategoal-textarea:focus,
+.creategoal-select:focus {
+    border-bottom-color: #1f2421;
+}
+
+/* два поля в ряд */
+.creategoal-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+.creategoal-error {
+    color: #c1502e;
+    font-size: 13px;
+    margin: 0 0 16px;
+}
+
+.creategoal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.creategoal-button {
+    flex: 1;
+    background: #1f2421;
+    color: #faf9f5;
+    border: none;
+    border-radius: 6px;
+    padding: 11px;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: "Inter", sans-serif;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.creategoal-button:hover {
+    background: #35403b;
+}
+
+.creategoal-button:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.creategoal-button-secondary {
+    background: transparent;
+    color: #1f2421;
+    border: 1px solid #d8d6cd;
+}
+
+.creategoal-button-secondary:hover {
+    background: #f3f1ea;
+}

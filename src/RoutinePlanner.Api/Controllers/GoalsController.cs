@@ -129,6 +129,7 @@ public class GoalsController : ControllerBase
         g.Season,
         g.SubPeriod,
         g.TotalCost,
+        g.ManualCost,
         g.IsCompleted,
         g.CreatedAt,
         g.Items.Select(i => new GoalItemDto(i.Id, i.Title, i.Cost, i.IsCompleted, i.CreatedAt)).ToList());

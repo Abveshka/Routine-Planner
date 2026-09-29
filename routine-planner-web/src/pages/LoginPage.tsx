@@ -1,22 +1,23 @@
 ﻿import { useState } from "react";
+import { useNavigate, Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import "./LoginPage.css";
 
-interface LoginPageProps {
-    onLoginSuccess: (token: string) => void;
-}
-
-function LoginPage({ onLoginSuccess }: LoginPageProps) {
+function LoginPage() {
+    const { login, token } = useAuth();
+    const navigate = useNavigate();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-
+    
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
         setIsSubmitting(true);
-
+        
         try {
+            
             const response = await fetch("http://localhost:5112/api/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -29,13 +30,15 @@ function LoginPage({ onLoginSuccess }: LoginPageProps) {
             }
 
             const data = await response.json();
-            localStorage.setItem("token", data.token);
-            onLoginSuccess(data.token);
+            login(data.token);
+            navigate("/goals");
         } finally {
             setIsSubmitting(false);
         }
+        if (token) { //если пользователь уже залогинен, но захочет вручную открыть страницу логина
+            return <Navigate to="/goals" replace />;
+        }
     };
-
     return (
         <div className="login-page">
             <div className="login-card">
