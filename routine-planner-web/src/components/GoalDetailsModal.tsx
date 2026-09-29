@@ -22,6 +22,7 @@ const SUB_PERIOD_OPTIONS = ["Начало", "Середина", "Конец"];
 type GoalChanges = {
     title: string;
     description: string | null;
+    year: number;
     season: number;
     subPeriod: number;
     manualCost: number | null
@@ -39,6 +40,16 @@ function GoalDetailsModal() {
     return <GoalDetailsContent goal={goal} onGoalUpdate={onGoalUpdate} />;
 }
 
+function getYearOptions(selectedYear: number): number[] {
+    const currentYear = new Date().getFullYear();
+    const years = Array.from({ length: 11 }, (_, i) => currentYear + i);
+    if (!years.includes(selectedYear)) {
+        years.push(selectedYear);
+        years.sort((a, b) => a - b);
+    }
+    return years;
+}
+
 // Внутренний компонент: сама модалка, здесь цель уже точно есть
 function GoalDetailsContent({ goal, onGoalUpdate, }: 
     { goal: Goal; onGoalUpdate: (goalId: number, changes: GoalChanges) => Promise<boolean>; }) {
@@ -47,6 +58,7 @@ function GoalDetailsContent({ goal, onGoalUpdate, }:
     const [isSaving, setIsSaving] = useState(false);
     const [title, setTitle] = useState(goal.title);
     const [description, setDescription] = useState(goal.description ?? "");
+    const [year, setYear] = useState(goal.year);
     const [season, setSeason] = useState(goal.season);
     const [subPeriod, setSubPeriod] = useState(goal.subPeriod);
     const [cost, setCost] = useState(goal.manualCost?.toString() ?? "");
@@ -64,11 +76,12 @@ function GoalDetailsContent({ goal, onGoalUpdate, }:
         }
 
         setIsSaving(true); // блокируем кнопку, чтобы не нажали дважды
-
+        
         const success = await onGoalUpdate(goal.id, {
             title: title.trim(),
             // пустое описание отправляем как null, потому что в Goal оно string | null
             description: description.trim() === "" ? null : description,
+            year,
             season,
             subPeriod,
             manualCost: cost.trim() === "" ? null : Number(cost),
@@ -85,6 +98,7 @@ function GoalDetailsContent({ goal, onGoalUpdate, }:
     function handleCancel() {
         setTitle(goal.title);
         setDescription(goal.description ?? "");
+        setYear(goal.year);
         setSeason(goal.season);
         setSubPeriod(goal.subPeriod);
         setCost(goal.manualCost?.toString() ?? "");
@@ -126,6 +140,13 @@ function GoalDetailsContent({ goal, onGoalUpdate, }:
                     <span className="modal-field-label">Когда</span>
                     {isEditing ? (
                         <div className="modal-select-row">
+                            <select value={year} onChange={(e) => setYear(Number(e.target.value))}>
+                                {getYearOptions(goal.year).map((y) => (
+                                    <option key={y} value={y}>
+                                        {y}
+                                    </option>
+                                ))}
+                            </select>
                             <select value={season} onChange={(e) => setSeason(Number(e.target.value))}>
                                 {SEASON_OPTIONS.map((label, index) => (
                                     <option key={index} value={index}>

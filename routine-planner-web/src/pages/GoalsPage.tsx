@@ -23,6 +23,7 @@ interface Goal {
 interface GoalChanges {
     title: string;
     description: string | null;
+    year: number;
     season: number;
     subPeriod: number;
     manualCost: number | null;
@@ -56,8 +57,6 @@ function formatCost(cost: number) {
     return new Intl.NumberFormat("ru-RU").format(cost) + " ₽";
 }
 
-// ===== Компонент страницы =====
-
 function GoalsPage() {
     const { token, logout } = useAuth();
     const navigate = useNavigate();
@@ -79,8 +78,7 @@ function GoalsPage() {
             response.json().then((data) => setGoals(data));
         });
     }, [token, logout]);
-
-    // ===== handleToggle: только переключение галочки =====
+    
     async function handleToggle(goalId: number) {
         // Сначала меняем на экране сразу, чтобы интерфейс не тормозил
         setGoals((prevGoals) =>
@@ -107,16 +105,9 @@ function GoalsPage() {
                 )
             );
         }
-    } // <-- handleToggle заканчивается здесь
-
-    // ===== handleUpdate: сохранение изменений цели =====
-    // Стоит на том же уровне, что и handleToggle (НЕ внутри неё).
-    // Возвращает true, если сохранилось, и false, если нет.
+    } 
+    
     async function handleUpdate(goalId: number, changes: GoalChanges): Promise<boolean> {
-        // Находим текущую цель: нужен год. Его в модалке не меняем,
-        // но сервер ждёт его в запросе
-        const goal = goals.find((g) => g.id === goalId);
-        if (!goal) return false;
 
         const response = await fetch(`http://localhost:5112/api/goals/${goalId}`, {
             method: "PUT",
@@ -128,7 +119,7 @@ function GoalsPage() {
             body: JSON.stringify({
                 title: changes.title,
                 description: changes.description,
-                year: goal.year,
+                year: changes.year,
                 season: changes.season,
                 subPeriod: changes.subPeriod,
                 manualCost: changes.manualCost,
