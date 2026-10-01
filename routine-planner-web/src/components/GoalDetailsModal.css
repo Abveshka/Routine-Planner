@@ -16,7 +16,6 @@
     margin-bottom: 20px;
 }
 
-/* Затемнение заднего фона */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -31,7 +30,6 @@
     z-index: 1000;
 }
 
-/* Карточка модального окна */
 .modal-card {
     background: #ffffff;
     border-radius: 12px;
@@ -43,7 +41,6 @@
     box-sizing: border-box;
 }
 
-/* Кнопка крестика для закрытия */
 .modal-close {
     position: absolute;
     top: 16px;
@@ -63,7 +60,6 @@
     background-color: #f0eee6;
 }
 
-/* Отступы для полей в модальном окне */
 .modal-field {
     margin-bottom: 16px;
 }
@@ -388,8 +384,41 @@
     cursor: pointer;
 }
 .modal-add-subtask {
+    border-radius: 6px;
+    cursor: pointer;
+    padding: 4px 0;
+    color: black;
+    border: 1px solid #d8d6cd;
+}
+
+.modal-subtask-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.modal-subtask-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.modal-subtask-top .modal-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.modal-subtask-remove {
+    flex-shrink: 0; 
     background: none;
     border: none;
     cursor: pointer;
-    padding: 4px 0;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+}
+
+.modal-subtask-cost {
+    width: 120px; 
 }

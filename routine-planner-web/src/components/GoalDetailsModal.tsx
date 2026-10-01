@@ -1,5 +1,5 @@
 ﻿import { useState } from "react";
-import {Check, X} from "lucide-react";
+import {Check, Trash2, X} from "lucide-react";
 import { useNavigate, useParams, useOutletContext } from "react-router-dom";
 import "./GoalDetailsModal.css";
 
@@ -296,8 +296,8 @@ function GoalDetailsContent({ goal, onGoalUpdate, onItemToggle, onItemsSave }: {
                             <span className="modal-field-label">Подцели</span>
                             {goal.items.length > 0 && (
                                 <span className="modal-counter">
-                {doneCount} из {goal.items.length}
-            </span>
+                                {doneCount} из {goal.items.length}
+                            </span>
                             )}
                         </div>
 
@@ -311,12 +311,23 @@ function GoalDetailsContent({ goal, onGoalUpdate, onItemToggle, onItemsSave }: {
                             <div className="modal-items">
                                 {subtasks.map((s) => (
                                     <div key={s.id} className="modal-subtask-row">
-                                        <input
-                                            className="modal-input"
-                                            value={s.title}
-                                            onChange={(e) => updateSubtask(s.id, "title", e.target.value)}
-                                            placeholder="Название подцели"
-                                        />
+                                        <div className="modal-subtask-top">
+                                            <input
+                                                className="modal-input"
+                                                value={s.title}
+                                                onChange={(e) => updateSubtask(s.id, "title", e.target.value)}
+                                                placeholder="Название подцели"
+                                            />
+                                            <button
+                                                type="button"
+                                                className="modal-subtask-remove"
+                                                onClick={() => removeSubtask(s.id)}
+                                                aria-label="Удалить подцель"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+
                                         <input
                                             className="modal-input modal-subtask-cost"
                                             type="number"
@@ -325,14 +336,6 @@ function GoalDetailsContent({ goal, onGoalUpdate, onItemToggle, onItemsSave }: {
                                             onChange={(e) => updateSubtask(s.id, "cost", e.target.value)}
                                             placeholder="₽"
                                         />
-                                        <button
-                                            type="button"
-                                            className="modal-subtask-remove"
-                                            onClick={() => removeSubtask(s.id)}
-                                            aria-label="Удалить подцель"
-                                        >
-                                            ×
-                                        </button>
                                     </div>
                                 ))}
                                 <button type="button" className="modal-add-subtask" onClick={addSubtask}>
