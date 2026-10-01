@@ -1,11 +1,17 @@
 ﻿import { useState, useEffect } from "react";
 import { useNavigate, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Snowflake, Flower2, Sun, Leaf } from "lucide-react";
+import { Snowflake, Flower2, Sun, Leaf, ChevronRight, ChevronDown } from "lucide-react";
 import "./GoalsPage.css";
 import Sidebar from "../components/Sidebar";
 
-// ===== Типы =====
+interface GoalItem {
+    id: number;
+    title: string;
+    cost: number;
+    isCompleted: boolean;
+    createdAt: string;
+}
 
 interface Goal {
     id: number;
@@ -14,12 +20,12 @@ interface Goal {
     year: number;
     season: number;
     subPeriod: number;
-    totalCost: number;          // итоговая стоимость (считает сервер)
-    manualCost: number | null;  // стоимость, введённая вручную (или null)
+    totalCost: number;
+    manualCost: number | null;
     isCompleted: boolean;
+    items: GoalItem[];
 }
 
-// Какие поля можно менять из модалки
 interface GoalChanges {
     title: string;
     description: string | null;
@@ -28,8 +34,6 @@ interface GoalChanges {
     subPeriod: number;
     manualCost: number | null;
 }
-
-// ===== Константы и вспомогательные функции =====
 
 const SUB_PERIOD_LABELS = ["Начало", "Середина", "Конец"];
 
@@ -41,6 +45,12 @@ const SEASON_CONFIG = [
 ];
 
 type GroupedGoals = Record<number, Record<number, Record<number, Goal[]>>>;
+
+type ItemsChanges = {
+    added: { title: string; cost: number | null }[];
+    updated: { id: number; title: string; cost: number | null }[];
+    deletedIds: number[];
+};
 
 function groupGoals(goals: Goal[]): GroupedGoals {
     const grouped: GroupedGoals = {};
@@ -62,7 +72,19 @@ function GoalsPage() {
     const navigate = useNavigate();
     const [goals, setGoals] = useState<Goal[]>([]);
 
-    // Загружаем список целей при открытии страницы
+    const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+    function handleExpand(goalId: number) {
+        setExpandedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(goalId)) {
+                next.delete(goalId);
+            } else {
+                next.add(goalId);
+            }
+            return next;
+        });
+    }
+    
     useEffect(() => {
         fetch("http://localhost:5112/api/goals", {
             headers: { Authorization: `Bearer ${token}` },
@@ -80,7 +102,6 @@ function GoalsPage() {
     }, [token, logout]);
     
     async function handleToggle(goalId: number) {
-        // Сначала меняем на экране сразу, чтобы интерфейс не тормозил
         setGoals((prevGoals) =>
             prevGoals.map((goal) =>
                 goal.id === goalId ? { ...goal, isCompleted: !goal.isCompleted } : goal
@@ -105,7 +126,88 @@ function GoalsPage() {
                 )
             );
         }
-    } 
+    }
+
+    async function handleItemToggle(goalId: number, itemId: number) {
+        const flipItem = () =>
+            setGoals((prevGoals) =>
+                prevGoals.map((goal) =>
+                    goal.id === goalId
+                        ? {
+                            ...goal,
+                            items: goal.items.map((item) =>
+                                item.id === itemId
+                                    ? { ...item, isCompleted: !item.isCompleted }
+                                    : item
+                            ),
+                        }
+                        : goal
+                )
+            );
+
+        flipItem();
+        
+        const response = await fetch(
+            `http://localhost:5112/api/goals/${goalId}/items/${itemId}/toggle`,
+            { method: "PATCH", headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (response.status === 401) {
+            logout();
+            return;
+        }
+        if (!response.ok) {
+            console.error("Не удалось изменить статус подцели");
+            flipItem();
+        }
+    }
+
+    async function handleItemsSave(goalId: number, changes: ItemsChanges): Promise<boolean> {
+        const headers = {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        };
+        const base = `http://localhost:5112/api/goals/${goalId}/items`;
+        let allOk = true;
+
+        // 1. Удаляем
+        for (const itemId of changes.deletedIds) {
+            const res = await fetch(`${base}/${itemId}`, { method: "DELETE", headers });
+            if (res.status === 401) { logout(); return false; }
+            if (!res.ok) allOk = false;
+        }
+
+        // 2. Обновляем
+        for (const item of changes.updated) {
+            const res = await fetch(`${base}/${item.id}`, {
+                method: "PUT",
+                headers,
+                body: JSON.stringify({ title: item.title, cost: item.cost }),
+            });
+            if (res.status === 401) { logout(); return false; }
+            if (!res.ok) allOk = false;
+        }
+
+        // 3. Добавляем
+        for (const item of changes.added) {
+            const res = await fetch(base, {
+                method: "POST",
+                headers,
+                body: JSON.stringify({ title: item.title, cost: item.cost }),
+            });
+            if (res.status === 401) { logout(); return false; }
+            if (!res.ok) allOk = false;
+        }
+
+        // 4. Перезагружаем цель с сервера
+        const goalRes = await fetch(`http://localhost:5112/api/goals/${goalId}`, { headers });
+        if (goalRes.ok) {
+            const fresh: Goal = await goalRes.json();
+            setGoals((prev) => prev.map((g) => (g.id === goalId ? fresh : g)));
+        }
+
+        return allOk;
+    }
     
     async function handleUpdate(goalId: number, changes: GoalChanges): Promise<boolean> {
 
@@ -115,7 +217,6 @@ function GoalsPage() {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`,
             },
-            // JSON.stringify превращает объект в текст, который можно отправить
             body: JSON.stringify({
                 title: changes.title,
                 description: changes.description,
@@ -142,8 +243,6 @@ function GoalsPage() {
         });
 
         if (!freshResponse.ok) {
-            // Сохранилось, но свежие данные не получили.
-            // Обновляем список вручную, чтобы хоть что-то показать
             setGoals((prev) =>
                 prev.map((g) =>
                     g.id === goalId
@@ -155,8 +254,7 @@ function GoalsPage() {
         }
 
         const freshGoal: Goal = await freshResponse.json();
-
-        // Заменяем старую версию цели на свежую с сервера
+        
         setGoals((prev) => prev.map((g) => (g.id === goalId ? freshGoal : g)));
         return true;
     }
@@ -187,25 +285,65 @@ function GoalsPage() {
                                     {Object.entries(subPeriods).map(([subIndex, items]) => (
                                         <div key={subIndex}>
                                             <p className="subperiod-label">{SUB_PERIOD_LABELS[Number(subIndex)]}</p>
-                                            {items.map((goal) => (
-                                                <div className="goal-row" key={goal.id}>
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={goal.isCompleted}
-                                                        onChange={() => handleToggle(goal.id)}
-                                                    />
-                                                    <span
-                                                        className={goal.isCompleted ? "goal-done" : "goal-title"}
-                                                        onClick={() => navigate(`/goals/${goal.id}`)}
-                                                        style={{ cursor: "pointer" }}
-                                                    >
-                                                        {goal.title}
-                                                    </span>
-                                                    <span className="goal-cost">
-                                                        {goal.totalCost ? formatCost(goal.totalCost) : "—"}
-                                                    </span>
-                                                </div>
-                                            ))}
+                                            {items.map((goal) => {
+                                                const isExpanded = expandedIds.has(goal.id);
+                                                const hasItems = goal.items.length > 0;
+
+                                                return (
+                                                    <div key={goal.id}>
+                                                        <div className="goal-row">
+                                                            {}
+                                                            {hasItems ? (
+                                                                <button
+                                                                    className="expand-btn"
+                                                                    onClick={() => handleExpand(goal.id)}
+                                                                    aria-label={isExpanded ? "Свернуть" : "Развернуть"}
+                                                                >
+                                                                    {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                                                </button>
+                                                            ) : (
+                                                                <span className="expand-placeholder" />
+                                                            )}
+
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={goal.isCompleted}
+                                                                onChange={() => handleToggle(goal.id)}
+                                                            />
+                                                            <span
+                                                                className={goal.isCompleted ? "goal-done" : "goal-title"}
+                                                                onClick={() => navigate(`/goals/${goal.id}`)}
+                                                                style={{ cursor: "pointer" }}
+                                                            >
+                    {goal.title}
+                </span>
+                                                            <span className="goal-cost">
+                    {goal.totalCost ? formatCost(goal.totalCost) : "—"}
+                </span>
+                                                        </div>
+                                                        
+                                                        {isExpanded && (
+                                                            <div className="goal-items">
+                                                                {goal.items.map((item) => (
+                                                                    <div className="goal-item-row" key={item.id}>
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={item.isCompleted}
+                                                                            onChange={() => handleItemToggle(goal.id, item.id)}
+                                                                        />
+                                                                        <span className={item.isCompleted ? "goal-done" : "goal-title"}>
+                                {item.title}
+                            </span>
+                                                                        <span className="goal-cost">
+                                {item.cost ? formatCost(item.cost) : "—"}
+                            </span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     ))}
                                 </div>
@@ -215,8 +353,7 @@ function GoalsPage() {
                 ))}
             </div>
 
-            {/* Передаём в модалку и список целей, и функцию сохранения */}
-            <Outlet context={{ goals, onGoalUpdate: handleUpdate }} />
+            <Outlet context={{ goals, onGoalUpdate: handleUpdate, onItemToggle: handleItemToggle, onItemsSave: handleItemsSave }} />
         </div>
     );
 }

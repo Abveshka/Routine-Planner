@@ -17,7 +17,7 @@ namespace RoutinePlanner.Api.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.10")
+                .HasAnnotation("ProductVersion", "8.0.22")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -262,7 +262,7 @@ namespace RoutinePlanner.Api.Migrations
 
                     b.HasIndex("ApplicationUserId");
 
-                    b.ToTable("Goals", (string)null);
+                    b.ToTable("Goals");
                 });
 
             modelBuilder.Entity("RoutinePlanner.Api.Models.GoalItem", b =>
@@ -273,7 +273,7 @@ namespace RoutinePlanner.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal>("Cost")
+                    b.Property<decimal?>("Cost")
                         .HasColumnType("numeric");
 
                     b.Property<DateTime>("CreatedAt")
@@ -293,7 +293,7 @@ namespace RoutinePlanner.Api.Migrations
 
                     b.HasIndex("GoalId");
 
-                    b.ToTable("GoalItems", (string)null);
+                    b.ToTable("GoalItems");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

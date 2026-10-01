@@ -2,4 +2,4 @@
 
 public record CreateGoalItemRequest(
     string Title,
-    decimal Cost);
+    decimal? Cost);

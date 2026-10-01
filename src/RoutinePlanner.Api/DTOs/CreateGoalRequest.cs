@@ -8,4 +8,5 @@ public record CreateGoalRequest(
     int Year,
     Season Season,
     SubPeriod SubPeriod,
-    decimal? ManualCost);
+    decimal? ManualCost,
+    List<CreateGoalItemRequest>? Items = null);

@@ -64,7 +64,14 @@ public class GoalsController : ControllerBase
             Year = req.Year,
             Season = req.Season,
             SubPeriod = req.SubPeriod,
-            ManualCost = req.ManualCost
+            ManualCost = req.ManualCost,
+            Items = (req.Items ?? new())
+            .Select(i => new GoalItem
+            {
+            Title = i.Title,
+            Cost = i.Cost
+        })
+        .ToList()
         };
 
         _db.Goals.Add(goal);

@@ -6,11 +6,10 @@ import "./CreateGoalPage.css";
 
 const SEASON_OPTIONS = ["Зима", "Весна", "Лето", "Осень"];
 const SUB_PERIOD_OPTIONS = ["Начало", "Середина", "Конец"];
-
+type Subtask = { id: number; title: string; cost: string };
 function CreateGoalPage() {
     const navigate = useNavigate();
     const { token, logout } = useAuth();
-
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [year, setYear] = useState(new Date().getFullYear());
@@ -19,7 +18,21 @@ function CreateGoalPage() {
     const [manualCost, setManualCost] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [subtasks, setSubtasks] = useState<Subtask[]>([]);
 
+    function addSubtask() {
+        setSubtasks((prev) => [...prev, { id: Date.now(), title: "", cost: "" }]);
+    }
+
+    function updateSubtask(id: number, field: "title" | "cost", value: string) {
+        setSubtasks((prev) =>
+            prev.map((s) => (s.id === id ? { ...s, [field]: value } : s))
+        );
+    }
+
+    function removeSubtask(id: number) {
+        setSubtasks((prev) => prev.filter((s) => s.id !== id));
+    }
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         setError(null);
@@ -39,11 +52,15 @@ function CreateGoalPage() {
                     season,
                     subPeriod,
                     manualCost: manualCost ? Number(manualCost) : null,
+                    items: subtasks.map((s) => ({
+                        title: s.title,
+                        cost: s.cost ? Number(s.cost) : null,
+                    })),
                 }),
             });
 
             if (response.status === 401) {
-                logout(); // токен просрочен: ProtectedRoute перекинет на /login
+                logout();
                 return;
             }
 
@@ -88,6 +105,44 @@ function CreateGoalPage() {
                                 onChange={(e) => setDescription(e.target.value)}
                             />
                         </label>
+
+                        <div className="creategoal-subtasks">
+                            {subtasks.map((subtask) => (
+                                <div key={subtask.id} className="creategoal-subtask-row">
+                                    <input
+                                        className="creategoal-input creategoal-subtask-title"
+                                        value={subtask.title}
+                                        onChange={(e) => updateSubtask(subtask.id, "title", e.target.value)}
+                                        placeholder="Название подзадачи"
+                                    />
+                                    <input
+                                        type="number"
+                                        className="creategoal-input creategoal-subtask-cost"
+                                        value={subtask.cost}
+                                        onChange={(e) => updateSubtask(subtask.id, "cost", e.target.value)}
+                                        placeholder="₽"
+                                    />
+                                    <button
+                                        type="button"
+                                        className="creategoal-subtask-remove"
+                                        onClick={() => removeSubtask(subtask.id)}
+                                        aria-label="Удалить подзадачу"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            ))}
+
+                            <div className="creategoal-subtasks-footer">
+                                <button
+                                    type="button"
+                                    className="creategoal-add-subtask"
+                                    onClick={addSubtask}
+                                >
+                                    + Добавить подзадачу
+                                </button>
+                            </div>
+                        </div>
 
                         <div className="creategoal-row">
                             <label className="creategoal-field">

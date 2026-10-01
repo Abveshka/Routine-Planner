@@ -18,7 +18,6 @@ public class Goal
     public bool IsCompleted { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public List<GoalItem> Items { get; set; } = new();
-
-    // Не хранится в базе — вычисляется на лету
-    public decimal TotalCost => ManualCost ?? Items.Sum(i => i.Cost);
+    
+    public decimal TotalCost => ManualCost ?? Items.Sum(i => i.Cost ?? 0);
 }

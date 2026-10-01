@@ -122,3 +122,53 @@
 .creategoal-button-secondary:hover {
     background: #f3f1ea;
 }
+
+.creategoal-subtasks {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.creategoal-subtask-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.creategoal-subtask-title {
+    flex: 1;
+}
+
+.creategoal-subtask-cost {
+    width: 110px;
+}
+
+.creategoal-subtask-remove {
+    background: none;
+    border: none;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    color: #999;
+}
+
+.creategoal-subtask-remove:hover {
+    color: #d33;
+}
+
+.creategoal-subtasks-footer {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.creategoal-add-subtask {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid #d8d6cd;
+    background: transparent;
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+
+}

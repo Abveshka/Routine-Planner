@@ -3,6 +3,6 @@
 public record GoalItemDto(
     int Id,
     string Title,
-    decimal Cost,
+    decimal? Cost,
     bool IsCompleted,
     DateTime CreatedAt);
