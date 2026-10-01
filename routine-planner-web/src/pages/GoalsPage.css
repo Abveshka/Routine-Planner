@@ -76,6 +76,9 @@
 .goal-cost {
     font-size: 13px;
     color: #8a8a83;
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
 }
 
 .add-goal-button {

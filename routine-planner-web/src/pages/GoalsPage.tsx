@@ -1,7 +1,8 @@
 ﻿import { useState, useEffect } from "react";
 import { useNavigate, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Snowflake, Flower2, Sun, Leaf, ChevronRight, ChevronDown } from "lucide-react";
+import ConfirmDialog from "../components/ConfirmDialog";
+import { Snowflake, Flower2, Sun, Leaf, ChevronRight, ChevronDown, Trash2 } from "lucide-react";
 import "./GoalsPage.css";
 import Sidebar from "../components/Sidebar";
 
@@ -71,6 +72,8 @@ function GoalsPage() {
     const { token, logout } = useAuth();
     const navigate = useNavigate();
     const [goals, setGoals] = useState<Goal[]>([]);
+    const [goalToDelete, setGoalToDelete] = useState<Goal | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
     function handleExpand(goalId: number) {
@@ -259,6 +262,27 @@ function GoalsPage() {
         return true;
     }
 
+    async function handleDelete(goalId: number) {
+        setIsDeleting(true);
+
+        const response = await fetch(`http://localhost:5112/api/goals/${goalId}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        setIsDeleting(false);
+        if (response.status === 401) {
+            logout();
+            return;
+        }
+        if (!response.ok) {
+            alert("Не удалось удалить цель");
+            return;
+        }
+
+        setGoals((prev) => prev.filter((goal) => goal.id !== goalId));
+        setGoalToDelete(null);
+    }
+    
     const grouped = groupGoals(goals);
 
     return (
@@ -315,11 +339,24 @@ function GoalsPage() {
                                                                 onClick={() => navigate(`/goals/${goal.id}`)}
                                                                 style={{ cursor: "pointer" }}
                                                             >
-                    {goal.title}
-                </span>
+                                                            {goal.title}
+                                                            </span>
                                                             <span className="goal-cost">
-                    {goal.totalCost ? formatCost(goal.totalCost) : "—"}
-                </span>
+                                                                <span>
+                                                                    {goal.totalCost ? formatCost(goal.totalCost) : "—"}
+                                                                </span>
+                                                            
+                                                                <button
+                                                                    className="expand-btn"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setGoalToDelete(goal);
+                                                                    }}
+                                                                    aria-label="Удалить цель"
+                                                                    >
+                                                                    <Trash2 size={16} />
+                                                                </button>
+                                                            </span>
                                                         </div>
                                                         
                                                         {isExpanded && (
@@ -332,11 +369,11 @@ function GoalsPage() {
                                                                             onChange={() => handleItemToggle(goal.id, item.id)}
                                                                         />
                                                                         <span className={item.isCompleted ? "goal-done" : "goal-title"}>
-                                {item.title}
-                            </span>
-                                                                        <span className="goal-cost">
-                                {item.cost ? formatCost(item.cost) : "—"}
-                            </span>
+                                                                        {item.title}
+                                                                        </span>
+                                                                                                                    <span className="goal-cost">
+                                                                            {item.cost ? formatCost(item.cost) : "—"}
+                                                                        </span>
                                                                     </div>
                                                                 ))}
                                                             </div>
@@ -352,7 +389,15 @@ function GoalsPage() {
                     </section>
                 ))}
             </div>
-
+            {goalToDelete && (
+                <ConfirmDialog
+                    title="Удалить цель?"
+                    message={`«${goalToDelete.title}» будет удалена вместе со всеми подцелями. Это действие нельзя отменить.`}
+                    isLoading={isDeleting}
+                    onConfirm={() => handleDelete(goalToDelete.id)}
+                    onCancel={() => setGoalToDelete(null)}
+                />
+            )}
             <Outlet context={{ goals, onGoalUpdate: handleUpdate, onItemToggle: handleItemToggle, onItemsSave: handleItemsSave }} />
         </div>
     );
