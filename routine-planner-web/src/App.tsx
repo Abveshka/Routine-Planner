@@ -5,6 +5,7 @@ import GoalsPage from "./pages/GoalsPage";
 import CreateGoalPage from "./pages/CreateGoalPage";
 import CalendarPage from "./pages/CalendarPage";
 import GoalDetailsModal from "./components/GoalDetailsModal";
+import RegisterPage from "./pages/RegisterPage";
 
 function ProtectedRoute() {
     const { token } = useAuth();
@@ -22,6 +23,7 @@ function App() {
                 <Routes>
                     {/* Открытая страница: доступна без токена */}
                     <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
 
                     {/* Маршрут без path, только с element: это группа-обёртка.
               Все Route внутри проходят через ProtectedRoute */}

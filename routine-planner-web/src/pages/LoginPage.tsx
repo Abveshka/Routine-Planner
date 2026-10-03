@@ -1,5 +1,5 @@
 ﻿import { useState } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useNavigate, Navigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "./LoginPage.css";
 
@@ -75,6 +75,9 @@ function LoginPage() {
                     <button type="submit" className="login-button" disabled={isSubmitting}>
                         {isSubmitting ? "Подождите…" : "Войти"}
                     </button>
+                    <p className="login-switch">
+                        Нет аккаунта? <Link to="/register">Зарегистрироваться</Link>
+                    </p>
                 </form>
             </div>
         </div>
