@@ -6,14 +6,12 @@
     flex-direction: column;
     justify-content: center;
     padding: 24px 0 32px;
-
-    /* всё, что выходит за границы страницы, обрезается и не заходит под сайдбар */
+    
     position: relative;
     overflow-x: clip;
     isolation: isolate;
 }
 
-/* ---------- карусель ---------- */
 .carousel {
     position: relative;
 }
@@ -67,37 +65,9 @@
     box-shadow: none;
 }
 
-/* отступы от краёв: слева заметно больше, чтобы не липнуть к сайдбару */
 .carousel-arrow.left { left: clamp(48px, 5vw, 88px); }
 .carousel-arrow.right { right: clamp(32px, 3vw, 56px); }
 
-.carousel-dots {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-}
-
-.carousel-dots button {
-    width: 8px;
-    height: 8px;
-    padding: 0;
-    border: 0;
-    border-radius: 50%;
-    background: #ddd7cc;
-    cursor: pointer;
-    transition: background 0.2s, transform 0.2s;
-}
-
-.carousel-dots button.on {
-    background: #1c1b19;
-    transform: scale(1.25);
-}
-
-.carousel-dots button.year-gap {
-    margin-left: 14px;
-}
-
-/* ---------- слот банки ---------- */
 .jar-slot {
     flex: 0 0 320px;
     scroll-snap-align: center;
@@ -142,7 +112,6 @@
     color: var(--accent);
 }
 
-/* ---------- крышка и горлышко ---------- */
 .jar-lid {
     width: 62%;
     height: 20px;
@@ -164,7 +133,6 @@
     background: var(--tint);
 }
 
-/* ---------- банка ---------- */
 .jar-wrap {
     position: relative;
 }
@@ -184,7 +152,6 @@
     z-index: 3;
 }
 
-/* этикетка с годом */
 .jar-label {
     position: absolute;
     top: 16px;
@@ -206,14 +173,13 @@
 .jar {
     position: relative;
     display: flex;
-    flex-direction: column-reverse; /* «Начало» лежит на дне */
+    flex-direction: column-reverse;
     gap: 6px;
     height: 460px;
     padding: 70px 14px 18px;
     overflow-y: auto;
     border: 2.5px solid var(--accent);
     border-radius: 30px 30px 44px 44px;
-    /* окрашенное стекло: светлее сверху, насыщеннее ко дну */
     background:
             linear-gradient(90deg, rgba(255, 255, 255, 0.55), transparent 22%, transparent 78%, rgba(255, 255, 255, 0.35)),
             linear-gradient(180deg, color-mix(in srgb, var(--tint) 55%, #fff) 0%, var(--tint) 45%, var(--mid) 100%);
@@ -246,7 +212,6 @@
     opacity: 0.8;
 }
 
-/* ---------- цель-«камушек» ---------- */
 .pebble {
     display: flex;
     align-items: center;

@@ -418,17 +418,7 @@ function CalendarPage() {
                         <ChevronRight size={24} strokeWidth={2.5} />
                     </button>
                 </div>
-
-                <div className="carousel-dots">
-                    {slots.map((s, i) => (
-                        <button
-                            key={`${s.year}-${s.season}`}
-                            className={(active === i ? "on " : "") + (i > 0 && slots[i - 1].year !== s.year ? "year-gap" : "")}
-                            onClick={() => scrollToSlot(i)}
-                            aria-label={`${SEASONS[s.season].label} ${s.year}`}
-                        />
-                    ))}
-                </div>
+                
             </div>
             <Outlet
                 context={{
