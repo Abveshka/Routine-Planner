@@ -108,7 +108,7 @@ function GoalDetailsContent({ goal, onGoalUpdate, onItemToggle, onItemsSave }: {
         setSubtasks((prev) => prev.filter((s) => s.id !== id));
     }
     function handleClose() {
-        navigate("/goals");
+        navigate("..");
     }
 
     function buildItemsChanges(): ItemsChanges {

@@ -3,7 +3,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import LoginPage from "./pages/LoginPage";
 import GoalsPage from "./pages/GoalsPage";
 import CreateGoalPage from "./pages/CreateGoalPage";
-import Calendar from "./pages/Calendar";
+import CalendarPage from "./pages/CalendarPage";
 import GoalDetailsModal from "./components/GoalDetailsModal";
 
 function ProtectedRoute() {
@@ -30,7 +30,9 @@ function App() {
                             <Route path=":id" element={<GoalDetailsModal />} />
                         </Route>
                         <Route path="/creategoal" element={<CreateGoalPage />} />
-                        <Route path="/calendar" element={<Calendar />} />
+                        <Route path="/calendar" element={<CalendarPage />}>
+                            <Route path=":id" element={<GoalDetailsModal />} />
+                        </Route>
                     </Route>
 
                     {/* path="*" ловит любой неизвестный адрес и перекидывает на /goals.
