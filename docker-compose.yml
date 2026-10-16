@@ -21,6 +21,7 @@
       context: .
       dockerfile: src/RoutinePlanner.Api/Dockerfile
     environment:
+      ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=routineplanner;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres}"
       Jwt__Key: ${JWT_KEY:?Add JWT_KEY to your .env file}
