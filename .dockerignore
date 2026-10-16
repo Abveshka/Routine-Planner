@@ -1,0 +1,8 @@
+﻿.git
+.idea
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+**/.env
+**/appsettings.Development.json

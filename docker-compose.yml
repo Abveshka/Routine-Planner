@@ -10,5 +10,34 @@
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d routineplanner"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: src/RoutinePlanner.Api/Dockerfile
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=routineplanner;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres}"
+      Jwt__Key: ${JWT_KEY:?Add JWT_KEY to your .env file}
+    ports:
+      - "5112:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./routine-planner-web
+      dockerfile: Dockerfile
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+
 volumes:
   pgdata:
